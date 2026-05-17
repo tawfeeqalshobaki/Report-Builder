@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تقرير أداء قناة الجزيرة 2025</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    /* ═══════════════════════════════════════════════════════════
+       DESIGN TOKENS  — exact values extracted from reference HTML
+    ═══════════════════════════════════════════════════════════ */
+    :root {
+      --gold:      #d4a10f;   /* rgb(212,161,15)  — section headings  */
+      --navy:      #000542;   /* rgb(0,5,66)       — body text & bars  */
+      --navy2:     #00285d;   /* dark-navy cards                       */
+      --navy3:     #12285a;   /* medium-navy cards                     */
+      --maroon:    #681b34;   /* dark-maroon cards                     */
+      --maroon2:   #5d2134;   /* deeper maroon                         */
+      --purple:    #7f1972;   /* cover / section bg                    */
+      --teal:      #0097b2;   /* teal section bg                       */
+      --sky:       #76c1f7;   /* light-blue card                       */
+      --red:       #ff3131;   /* bar accent / negative                 */
+      --crimson:   #cb2327;   /* red accent strip                      */
+      --negred:    #f22a38;   /* negative percentage text              */
+      --brand:     #190e66;   /* footer brand text                     */
+      --white:     #ffffff;
+      --font:      'Tajawal', 'Segoe UI', sans-serif;
+      --slide-w:   1280px;
+      --r-card:    18px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       RESET & BASE
+    ═══════════════════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; scroll-snap-type: y mandatory; }
+    body {
+      font-family: var(--font);
+      background: #e8e9ef;
+      color: var(--navy);
+      direction: rtl;
+      text-align: right;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       TOP PDF BUTTON BAR
+    ═══════════════════════════════════════════════════════════ */
+    .pdf-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 999;
+      height: 48px;
+      background: var(--brand);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+    }
+    .pdf-bar-title {
+      color: rgba(255,255,255,0.8);
+      font-size: 0.82rem;
+      font-weight: 500;
+    }
+    .btn-pdf {
+      background: var(--gold);
+      color: var(--navy);
+      border: none;
+      padding: 0.45rem 1.4rem;
+      border-radius: 6px;
+      font-family: var(--font);
+      font-size: 0.82rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-pdf:hover { opacity: 0.85; }
+    .nav-dots {
+      display: flex;
+      gap: 0.4rem;
+      align-items: center;
+    }
+    .nav-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      cursor: pointer;
+      transition: background 0.2s;
+      border: none;
+      padding: 0;
+    }
+    .nav-dot.active { background: var(--gold); width: 20px; border-radius: 4px; }
+
+    /* ═══════════════════════════════════════════════════════════
+       SLIDE SYSTEM
+       Each slide = one A4-landscape page, white background,
+       centered like Canva slides
+    ═══════════════════════════════════════════════════════════ */
+    body { padding-top: 48px; }
+
+    .slide {
+      width: 100%;
+      min-height: calc(100vh - 48px);
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      scroll-snap-align: start;
+      overflow: hidden;
+      border-bottom: 8px solid #e8e9ef;
+    }
+
+    /* ── right-side vertical nav dots ── */
+    .slide-dots {
+      position: absolute;
+      left: 1.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 10;
+    }
+    .slide-dot-item {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: rgba(0,5,66,0.18);
+    }
+    .slide-dot-item.this { background: var(--navy2); width: 7px; height: 20px; border-radius: 4px; }
+
+    /* ═══════════════════════════════════════════════════════════
+       GOLD SECTION HEADING  (exact match: #d4a10f, bold, large)
+    ═══════════════════════════════════════════════════════════ */
+    .section-heading {
+      color: var(--gold);
+      font-size: 2.8rem;
+      font-weight: 800;
+      text-align: center;
+      line-height: 1.2;
+    }
+    .section-subheading {
+      color: var(--navy);
+      font-size: 1.05rem;
+      font-weight: 700;
+      text-align: center;
+      margin-top: 0.4rem;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       DARK ROUNDED CARDS  (matching Canva rounded-rect elements)
+    ═══════════════════════════════════════════════════════════ */
+    .card {
+      border-radius: var(--r-card);
+      color: var(--white);
+      padding: 1.5rem 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .card.navy   { background: var(--navy2); }
+    .card.navy3  { background: var(--navy3); }
+    .card.maroon { background: var(--maroon); }
+    .card.black  { background: #000000; }
+    .card.purple { background: var(--purple); }
+    .card.teal   { background: var(--teal); }
+    .card.sky    { background: var(--sky); }
+    .card.red    { background: var(--red); }
+    .card.crimson{ background: var(--crimson); }
+    .card.gold   { background: var(--gold); }
+
+    .card-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.75);
+      margin-bottom: 0.4rem;
+    }
+    .card-value {
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: var(--white);
+      line-height: 1;
+    }
+    .card-value.xl { font-size: 3rem; }
+    .card-value.sm { font-size: 1.4rem; }
+
+    /* ═══════════════════════════════════════════════════════════
+       SLIDE-SPECIFIC LAYOUTS
+    ═══════════════════════════════════════════════════════════ */
+
+    /* ── SLIDE 1: COVER ── */
+    .slide-cover {
+      background: var(--purple) !important;
+      justify-content: center;
+      align-items: center;
+      padding: 3rem 4rem;
+    }
+    .cover-inner {
+      display: flex;
+      width: 100%;
+      max-width: 1100px;
+      gap: 3rem;
+      align-items: center;
+    }
+    .cover-left {
+      flex: 1;
+    }
+    .cover-right {
+      width: 340px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .cover-logo-row {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 1.5rem;
+    }
+    .cover-logo-box {
+      background: var(--white);
+      color: var(--purple);
+      font-size: 1.1rem;
+      font-weight: 900;
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .cover-logo-name { color: var(--white); font-size: 1rem; font-weight: 700; }
+    .cover-title {
+      font-size: 3.8rem;
+      font-weight: 900;
+      color: var(--white);
+      line-height: 1.1;
+      margin-bottom: 0.8rem;
+    }
+    .cover-title span { color: var(--gold); }
+    .cover-period {
+      font-size: 1rem;
+      color: rgba(255,255,255,0.65);
+      margin-bottom: 2rem;
+    }
+    .cover-stat-strip {
+      display: flex;
+      gap: 0;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 10px;
+      overflow: hidden;
+      width: fit-content;
+    }
+    .cs-item {
+      padding: 1rem 1.8rem;
+      text-align: center;
+      border-left: 1px solid rgba(255,255,255,0.2);
+    }
+    .cs-item:last-child { border-left: none; }
+    .cs-num  { font-size: 1.7rem; font-weight: 900; color: var(--white); display: block; }
+    .cs-lbl  { font-size: 0.72rem; color: rgba(255,255,255,0.6); display: block; margin-top: 0.1rem; }
+    .cover-footer-text {
+      position: absolute;
+      bottom: 1.8rem; left: 0; right: 0;
+      text-align: center;
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.4);
+      font-weight: 500;
+    }
+
+    /* ── SLIDE 2: KPI SUMMARY ── */
+    .slide-kpi {
+      padding: 0;
+    }
+    .kpi-top-band {
+      background: var(--navy3);
+      padding: 1.8rem 4rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 2rem;
+    }
+    .kpi-band-item { text-align: center; }
+    .kbi-label { font-size: 0.78rem; font-weight: 700; color: rgba(255,255,255,0.7); }
+    .kbi-value { font-size: 1.5rem; font-weight: 900; color: var(--white); }
+    .kpi-main {
+      flex: 1;
+      display: flex;
+      gap: 2rem;
+      padding: 2rem 4rem;
+      align-items: flex-start;
+    }
+    .kpi-cards-col {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      width: 260px;
+      flex-shrink: 0;
+    }
+    .kpi-small-card {
+      border-radius: 12px;
+      padding: 1.1rem 1.5rem;
+      color: white;
+    }
+    .kpi-small-card .ks-lbl { font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.72); }
+    .kpi-small-card .ks-val { font-size: 1.6rem; font-weight: 900; color: white; line-height: 1.1; }
+    .kpi-content-area { flex: 1; }
+    .kpi-highlight-box {
+      background: var(--teal);
+      border-radius: var(--r-card);
+      padding: 2rem 2.5rem;
+      color: white;
+      margin-bottom: 1.5rem;
+    }
+    .kpi-hl-main  { font-size: 0.9rem; font-weight: 400; color: rgba(255,255,255,0.8); }
+    .kpi-hl-bold  { font-size: 1.05rem; font-weight: 800; color: white; }
+    .kpi-pills {
+      display: flex; flex-wrap: wrap; gap: 0.75rem;
+    }
+    .kpi-pill {
+      background: #f5f6fa;
+      border: 1px solid #e0e2ec;
+      border-radius: 40px;
+      padding: 0.55rem 1.2rem;
+      display: flex; align-items: center; gap: 0.8rem;
+    }
+    .kp-label { font-size: 0.78rem; color: #555; }
+    .kp-val   { font-size: 0.95rem; font-weight: 800; color: var(--navy); }
+
+    /* ── SLIDE 3: PLATFORM ── */
+    .slide-platform {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 4rem 0;
+    }
+    .platform-body {
+      display: flex;
+      width: 100%;
+      max-width: 1100px;
+      gap: 2rem;
+      align-items: flex-start;
+      margin-top: 1.5rem;
+      flex: 1;
+    }
+    .platform-cards-col {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      width: 280px;
+      flex-shrink: 0;
+    }
+    .p-card {
+      border-radius: 12px;
+      padding: 1.2rem 1.5rem;
+      color: white;
+    }
+    .p-card-title { font-size: 0.72rem; font-weight: 700; color: rgba(255,255,255,0.7); margin-bottom: 0.3rem; }
+    .p-card-val   { font-size: 2rem; font-weight: 900; line-height: 1; }
+    .p-card-sub   { font-size: 0.72rem; color: rgba(255,255,255,0.6); margin-top: 0.2rem; }
+    .platform-chart-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .chart-container {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 1.2rem;
+      border: 1px solid #ebedf5;
+    }
+    .chart-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 0.8rem;
+    }
+
+    /* ── SLIDE 4: MONTHLY ── */
+    .slide-monthly {
+      padding: 2rem 4rem 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .monthly-body {
+      width: 100%;
+      max-width: 1100px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .peak-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: rgba(212,161,15,0.1);
+      border: 1px solid rgba(212,161,15,0.3);
+      border-radius: 40px;
+      padding: 0.45rem 1.2rem;
+      font-size: 0.82rem;
+      color: var(--navy);
+    }
+    .peak-tag strong { color: var(--gold); }
+    .month-mini-row {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 0.4rem;
+    }
+    .month-mini {
+      border-radius: 8px;
+      padding: 0.5rem 0.2rem;
+      text-align: center;
+    }
+    .mm-name { font-size: 0.6rem; color: rgba(0,5,66,0.55); margin-bottom: 0.2rem; }
+    .mm-val  { font-size: 0.72rem; font-weight: 800; color: var(--navy); }
+
+    /* ── SLIDE 5: CREATORS ── */
+    .slide-creators {
+      padding: 2rem 4rem 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .creators-body {
+      width: 100%;
+      max-width: 1100px;
+      display: flex;
+      gap: 2rem;
+      align-items: flex-start;
+      margin-top: 1.5rem;
+      flex: 1;
+    }
+    .creator-summary-col {
+      width: 260px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .cs-card {
+      border-radius: 12px;
+      padding: 1.2rem 1.5rem;
+      border: 1px solid #ebedf5;
+    }
+    .cs-card-eye  { font-size: 0.7rem; font-weight: 700; color: var(--teal); margin-bottom: 0.4rem; letter-spacing: 0.08em; }
+    .cs-card-name { font-size: 0.95rem; font-weight: 800; color: var(--navy); line-height: 1.3; margin-bottom: 0.3rem; }
+    .cs-card-sub  { font-size: 0.75rem; color: #888; }
+    .platform-tag {
+      display: inline-block;
+      padding: 0.15rem 0.55rem;
+      border-radius: 20px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      margin-top: 0.4rem;
+    }
+    .pt-fb { background: rgba(0,40,93,0.1); color: var(--navy2); border: 1px solid rgba(0,40,93,0.2); }
+    .pt-yt { background: rgba(255,49,49,0.1); color: var(--red);   border: 1px solid rgba(255,49,49,0.2); }
+
+    /* ── SLIDE 6: TABLE ── */
+    .slide-table {
+      padding: 2rem 4rem 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .table-body {
+      width: 100%;
+      max-width: 1100px;
+      margin-top: 1.5rem;
+      flex: 1;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+    .data-table thead th {
+      background: var(--navy3);
+      color: white;
+      padding: 0.85rem 1rem;
+      font-weight: 700;
+      text-align: right;
+      font-size: 0.8rem;
+    }
+    .data-table thead th:first-child { text-align: center; border-radius: 0 8px 0 0; }
+    .data-table thead th:last-child  { border-radius: 8px 0 0 0; }
+    .data-table tbody tr { border-bottom: 1px solid #ebedf5; }
+    .data-table tbody tr:hover { background: #f9fafc; }
+    .data-table td {
+      padding: 0.6rem 1rem;
+      color: var(--navy);
+      vertical-align: middle;
+    }
+    .data-table td:first-child { text-align: center; }
+    .rank-badge {
+      background: var(--navy2);
+      color: white;
+      border-radius: 50%;
+      width: 26px; height: 26px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 900;
+    }
+    .rank-badge.g1 { background: #c9973a; }
+    .rank-badge.g2 { background: #888; }
+    .rank-badge.g3 { background: #9e6640; }
+    .td-title {
+      max-width: 240px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 600;
+    }
+    .td-views { font-weight: 900; color: var(--navy2); }
+    .td-eng   { color: var(--teal); font-weight: 700; }
+    .ptag {
+      padding: 0.18rem 0.55rem;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+    .ptag.fb { background: rgba(0,40,93,0.1); color: var(--navy2); }
+    .ptag.yt { background: rgba(255,49,49,0.1); color: var(--red); }
+
+    /* ── Video Thumbnails ── */
+    .thumb-wrap {
+      width: 112px;
+      height: 63px;
+      border-radius: 6px;
+      overflow: hidden;
+      flex-shrink: 0;
+      position: relative;
+      background: var(--navy3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .thumb-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .thumb-play {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.28);
+      transition: background 0.2s;
+    }
+    .thumb-wrap:hover .thumb-play { background: rgba(0,0,0,0.12); }
+    .thumb-play svg { filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5)); }
+    .thumb-fb-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      background: linear-gradient(135deg, var(--navy2), var(--navy3));
+    }
+    .thumb-fb-icon {
+      width: 28px; height: 28px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: white;
+      font-size: 0.85rem;
+      font-weight: 900;
+    }
+    .thumb-fb-label {
+      font-size: 0.5rem;
+      color: rgba(255,255,255,0.5);
+      font-weight: 600;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       DARK FOOTER STRIP  (each slide has one at the bottom)
+    ═══════════════════════════════════════════════════════════ */
+    .slide-footer {
+      background: var(--navy);
+      color: rgba(255,255,255,0.75);
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 0.7rem 4rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: auto;
+    }
+    .sf-brand { color: var(--gold); font-weight: 800; }
+    .sf-page  { color: rgba(255,255,255,0.45); font-size: 0.72rem; }
+
+    /* ═══════════════════════════════════════════════════════════
+       RESPONSIVENESS
+    ═══════════════════════════════════════════════════════════ */
+
+    /* ── Table: always scrollable horizontally ── */
+    .table-body { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .data-table  { min-width: 700px; }
+
+    /* ── Nav bar: hide text links on small screens ── */
+    @media (max-width: 860px) {
+      .nav-links { display: none; }
+      .pdf-bar-title { font-size: 0.72rem; }
+    }
+
+    /* ── Cover: stack on medium screens ── */
+    @media (max-width: 900px) {
+      .cover-inner    { flex-direction: column; gap: 1.5rem; }
+      .cover-right    { width: 100%; flex-direction: row; flex-wrap: wrap; }
+      .cover-right .card { flex: 1 1 40%; }
+      .cover-title    { font-size: 2.8rem; }
+      .cover-stat-strip { flex-wrap: wrap; }
+      .slide          { padding: 2rem 1.5rem; }
+      .slide-cover    { padding: 2rem 1.5rem 4rem; }
+    }
+
+    /* ── KPI top band: wrap on small screens ── */
+    @media (max-width: 860px) {
+      .kpi-top-band   { flex-wrap: wrap; gap: 1rem; padding: 1.2rem 1.5rem; }
+      .kpi-main       { flex-direction: column; padding: 1.2rem 1.5rem; }
+      .kpi-cards-col  { width: 100%; flex-direction: row; flex-wrap: wrap; }
+      .kpi-small-card { flex: 1 1 45%; }
+    }
+
+    /* ── Platform slide: stack ── */
+    @media (max-width: 900px) {
+      .platform-body       { flex-direction: column; }
+      .platform-cards-col  { width: 100%; flex-direction: row; flex-wrap: wrap; }
+      .p-card              { flex: 1 1 45%; }
+      .platform-chart-area > div { flex-direction: column; }
+    }
+
+    /* ── Monthly: reduce mini grid columns ── */
+    @media (max-width: 860px) {
+      .month-mini-row { grid-template-columns: repeat(6, 1fr); }
+      .slide-monthly  { padding: 2rem 1.5rem 0; }
+    }
+    @media (max-width: 500px) {
+      .month-mini-row { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    /* ── Creators: stack ── */
+    @media (max-width: 900px) {
+      .creators-body     { flex-direction: column; }
+      .creator-summary-col { width: 100%; flex-direction: row; flex-wrap: wrap; }
+      .cs-card           { flex: 1 1 45%; min-width: 200px; }
+    }
+
+    /* ── Section headings: smaller on mobile ── */
+    @media (max-width: 640px) {
+      .section-heading   { font-size: 2rem; }
+      .slide-footer      { flex-direction: column; gap: 0.3rem; text-align: center; padding: 0.8rem 1rem; }
+    }
+
+    /* ── Generating PDF state ── */
+    body.pdf-generating .pdf-bar,
+    body.pdf-generating .slide-dots { display: none !important; }
+    body.pdf-generating .slide      { border-bottom: none; }
+
+    /* ═══════════════════════════════════════════════════════════
+       PRINT / PDF
+    ═══════════════════════════════════════════════════════════ */
+    @media print {
+      .pdf-bar, .slide-dots { display: none !important; }
+      body { padding-top: 0 !important; background: #fff; }
+      .slide {
+        min-height: 100vh;
+        page-break-after: always;
+        break-after: page;
+        border-bottom: none;
+        padding: 2rem 3rem;
+      }
+      .slide:last-child { page-break-after: auto; break-after: auto; }
+      canvas { max-width: 100% !important; }
+      .table-body { overflow: visible; }
+      @page { size: A4 landscape; margin: 0; }
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ PDF / NAV BAR ══════════════════════════════════════════ -->
+<div class="pdf-bar">
+  <span class="pdf-bar-title">تقرير أداء قناة الجزيرة 2025 · Al Jazeera Performance Report</span>
+  <div class="nav-dots" id="navDots"></div>
+  <button class="btn-pdf" id="btnDownloadPdf">⬇ تحميل PDF</button>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     SLIDE 1 — COVER
+══════════════════════════════════════════════════════════════ -->
+<section class="slide slide-cover" id="s1">
+  <div class="cover-inner">
+    <!-- Left: branding + title -->
+    <div class="cover-left">
+      <div class="cover-logo-row">
+        <div class="cover-logo-box">ج</div>
+        <span class="cover-logo-name">شبكة الجزيرة الإعلامية · Al Jazeera Media Network</span>
+      </div>
+      <div style="font-size:0.82rem;color:rgba(255,255,255,0.55);letter-spacing:0.16em;margin-bottom:0.8rem;font-weight:500">
+        تقرير الأداء السنوي · ANNUAL PERFORMANCE REPORT
+      </div>
+      <h1 class="cover-title">
+        تقرير أداء<br>
+        <span>قناة الجزيرة</span>
+      </h1>
+      <p class="cover-period">يناير – ديسمبر 2025 &nbsp;|&nbsp; فيسبوك ويوتيوب</p>
+      <div class="cover-stat-strip">
+        <div class="cs-item">
+          <span class="cs-num">5,813</span>
+          <span class="cs-lbl">فيديو منشور</span>
+        </div>
+        <div class="cs-item">
+          <span class="cs-num">554.5M</span>
+          <span class="cs-lbl">إجمالي المشاهدات</span>
+        </div>
+        <div class="cs-item">
+          <span class="cs-num">15.7M</span>
+          <span class="cs-lbl">إجمالي التفاعلات</span>
+        </div>
+      </div>
+    </div>
+    <!-- Right: colored stat cards -->
+    <div class="cover-right">
+      <div class="card navy3">
+        <div class="card-label">مجموع المشاهدات</div>
+        <div class="card-value xl">554.5M</div>
+      </div>
+      <div class="card maroon">
+        <div class="card-label">مجموع التفاعل</div>
+        <div class="card-value">15.7M</div>
+      </div>
+      <div style="display:flex;gap:0.8rem">
+        <div class="card navy2" style="flex:1">
+          <div class="card-label">متوسط المشاهدات</div>
+          <div class="card-value sm">95.4K</div>
+        </div>
+        <div class="card crimson" style="flex:1">
+          <div class="card-label">إجمالي الفيديوهات</div>
+          <div class="card-value sm">5,813</div>
+        </div>
+      </div>
+      <div class="card teal">
+        <div class="card-label">معدل التفاعل</div>
+        <div class="card-value">2.82%</div>
+      </div>
+    </div>
+  </div>
+  <div class="cover-footer-text">المصدر: Tubular Labs &nbsp;|&nbsp; إعداد: فريق التحليل والبيانات &nbsp;|&nbsp; مايو 2026</div>
+  <div class="slide-dots">
+    <div class="slide-dot-item this"></div>
+    <div class="slide-dot-item"></div>
+    <div class="slide-dot-item"></div>
+    <div class="slide-dot-item"></div>
+    <div class="slide-dot-item"></div>
+    <div class="slide-dot-item"></div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     SLIDE 2 — EXECUTIVE SUMMARY
+══════════════════════════════════════════════════════════════ -->
+<section class="slide slide-kpi" id="s2">
+  <div class="slide-dots">
+    <div class="slide-dot-item"></div>
+    <div class="slide-dot-item this"></div>
+    <div class="slide-dot-item"></div>
+    <div class="slide-dot-item"></div>
+    <div class="slide-dot-item"></div>
+    <div class="slide-dot-item"></div>
+  </div>
+
+  <!-- Top dark band with 4 key numbers -->
+  <div class="kpi-top-band">
+    <div class="kbi-item" style="text-align:center">
+      <div class="kbi-label">مجموع المشاهدات</div>
+      <div class="kbi-value">554,533,149</div>
+    </div>
+    <div class="kbi-item" style="text-align:center">
+      <div class="kbi-label">مجموع التفاعل</div>
+      <div class="kbi-value">15,652,865</div>
+    </div>
+    <div class="kbi-item" style="text-align:center">
+      <div class="kbi-label">متوسط المشاهدات للفيديو</div>
+      <div class="kbi-value">95,396</div>
+    </div>
+    <div class="kbi-item" style="text-align:center">
+      <div class="kbi-label">عدد الفيديوهات</div>
+      <div class="kbi-value">5,813</div>
+    </div>
+  </div>
+
+  <div class="kpi-main">
+    <!-- Left stat cards -->
+    <div class="kpi-cards-col">
+      <div class="kpi-small-card" style="background:var(--maroon)">
+        <div class="ks-lbl">إجمالي الإعجابات</div>
+        <div class="ks-val">13,178,115</div>
+      </div>
+      <div class="kpi-small-card" style="background:var(--navy3)">
+        <div class="ks-lbl">إجمالي التعليقات</div>
+        <div class="ks-val">969,638</div>
+      </div>
+      <div class="kpi-small-card" style="background:var(--navy2)">
+        <div class="ks-lbl">فيديوهات فيسبوك</div>
+        <div class="ks-val">4,387 (75.5%)</div>
+      </div>
+      <div class="kpi-small-card" style="background:var(--crimson)">
+        <div class="ks-lbl">فيديوهات يوتيوب</div>
+        <div class="ks-val">1,426 (24.5%)</div>
+      </div>
+    </div>
+
+    <!-- Right content area -->
+    <div class="kpi-content-area">
+      <div class="kpi-highlight-box">
+        <div class="kpi-hl-main">
+          تهيمن <span class="kpi-hl-bold">فيسبوك ويوتيوب</span> على جميع المشاهدات، وتستأثر
+          <span class="kpi-hl-bold">قناة الجزيرة العربية على يوتيوب</span>
+          بأعلى متوسط مشاهدات للفيديو بـ 179,800 مشاهدة للفيديو الواحد.
+          جاءت <span class="kpi-hl-bold">برنامج شبكات على فيسبوك</span> في المرتبة الثانية نشاطًا بـ 1,430 فيديو.
+        </div>
+      </div>
+      <div class="kpi-pills">
+        <div class="kpi-pill">
+          <span class="kp-label">إجمالي الإعجابات</span>
+          <span class="kp-val" style="color:var(--navy2)">13.2M</span>
+        </div>
+        <div class="kpi-pill">
+          <span class="kp-label">إجمالي التعليقات</span>
+          <span class="kp-val" style="color:var(--teal)">969,638</span>
+        </div>
+        <div class="kpi-pill">
+          <span class="kp-label">معدل التفاعل</span>
+          <span class="kp-val" style="color:var(--crimson)">2.82%</span>
+        </div>
+        <div class="kpi-pill">
+          <span class="kp-label">فيديو أسبوعيًا</span>
+          <span class="kp-val" style="color:var(--navy2)">~112</span>
+        </div>
+        <div class="kpi-pill">
+          <span class="kp-label">أعلى فيديو مشاهدةً</span>
+          <span class="kp-val" style="color:var(--gold)">7.1M مشاهدة</span>
+        </div>
+        <div class="kpi-pill">
+          <span class="kp-label">أعلى تفاعل فيديو</span>
+          <span class="kp-val" style="color:var(--maroon)">200,562</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <span class="sf-brand">وحدة التحليل والبيانات · Al Jazeera</span>
+    <span>تقرير أداء قناة الجزيرة 2025 &nbsp;|&nbsp; الملخص التنفيذي</span>
+    <span class="sf-page">2 / 6</span>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     SLIDE 3 — PLATFORM PERFORMANCE
+══════════════════════════════════════════════════════════════ -->
+<section class="slide slide-platform" id="s3">
+  <div class="slide-dots">
+    <div class="slide-dot-item"></div>
+    <div class="slide-dot-item"></div>
+    <div class="slide-dot-item this"></div>
+    <div class="slide-dot-item"></div>
+    <div class="slide-dot-item"></div>
+    <div class="slide-dot-item"></div>
+  </div>
+
+  <div class="section-heading">الأداء على المنصات</div>
+  <div class="section-subheading">مجموع المشاهدات والتفاعل حسب المنصة — فيسبوك ويوتيوب</div>
+
+  <div class="platform-body">
+    <!-- Stat cards column -->
+    <div class="platform-cards-col">
+      <div class="p-card" style="background:var(--navy2)">
+        <div class="p-card-title">فيسبوك — المشاهدات</div>
+        <div class="p-card-val">298.3M</div>
+        <div class="p-card-sub">53.8% من الإجمالي</div>
+      </div>
+      <div class="p-card" style="background:var(--crimson)">
+        <div class="p-card-title">يوتيوب — المشاهدات</div>
+        <div class="p-card-val">256.2M</div>
+        <div class="p-card-sub">46.2% من الإجمالي</div>
+      </div>
+      <div class="p-card" style="background:var(--maroon)">
+        <div class="p-card-title">فيسبوك — التفاعل</div>
+        <div class="p-card-val">11.7M</div>
+        <div class="p-card-sub">74.6% من الإجمالي</div>
+      </div>
+      <div class="p-card" style="background:var(--navy3)">
+        <div class="p-card-title">يوتيوب — التفاعل</div>
+        <div class="p-card-val">3.97M</div>
+        <div class="p-card-sub">25.4% من الإجمالي</div>
+      </div>
+    </div>
+
+    <!-- Charts area -->
+    <div class="platform-chart-area">
+      <div style="display:flex;gap:1rem">
+        <div class="chart-container" style="width:240px;flex-shrink:0">
+          <div class="chart-title">توزيع الفيديوهات حسب المنصة</div>
+          <canvas id="donutChart"></canvas>
+        </div>
+        <div class="chart-container" style="flex:1">
+          <div class="chart-title">المشاهدات والتفاعلات حسب المنصة</div>
+          <canvas id="platformBarChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <span class="sf-brand">وحدة التحليل والبيانات · Al Jazeera</span>
+    <span>الأداء على المنصات الرئيسية (فيسبوك ويوتيوب)</span>
+    <span class="sf-page">3 / 6</span>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     SLIDE 4 — MONTHLY TRENDS
+══════════════════════════════════════════════════════════════ -->
+<section class="slide slide-monthly" id="s4">
+  <div class="slide-dots">
+    <div class="slide-dot-item"></div>
+    <div class="slide-dot-item"></div>
+    <div class="slide-dot-item"></div>
+    <div class="slide-dot-item this"></div>
+    <div class="slide-dot-item"></div>
+    <div class="slide-dot-item"></div>
+  </div>
+
+  <div class="section-heading">الاتجاهات الشهرية</div>
+  <div class="section-subheading">مجموع المشاهدات وعدد الفيديوهات شهريًا — يناير إلى ديسمبر 2025</div>
+
+  <div class="monthly-body">
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+      <div class="peak-tag">🏆 أعلى شهر: <strong>مايو 2025</strong> — 47.8 مليون مشاهدة</div>
+      <div class="peak-tag" style="border-color:rgba(242,42,56,0.3);background:rgba(242,42,56,0.07)">📉 أدنى شهر: <strong style="color:var(--negred)">نوفمبر 2025</strong> — 18.6 مليون</div>
+    </div>
+
+    <div class="chart-container">
+      <canvas id="monthlyChart" style="max-height:310px"></canvas>
+    </div>
+
+    <div class="month-mini-row" id="monthMiniRow"></div>
+  </div>
+
+  <div class="slide-footer">
+    <span class="sf-brand">وحدة التحليل والبيانات · Al Jazeera</span>
+    <span>الاتجاهات الشهرية في المشاهدات وعدد الفيديوهات المنشورة</span>
+    <span class="sf-page">4 / 6</span>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     SLIDE 5 — TOP CREATORS
+══════════════════════════════════════════════════════════════ -->
+<section class="slide slide-creators" id="s5">
+  <div class="slide-dots">
+    <div class="slide-dot-item"></div>
+    <div class="slide-dot-item"></div>
+    <div class="slide-dot-item"></div>
+    <div class="slide-dot-item"></div>
+    <div class="slide-dot-item this"></div>
+    <div class="slide-dot-item"></div>
+  </div>
+
+  <div class="section-heading">أبرز المنشئين</div>
+  <div class="section-subheading">أعلى 10 حسابات من حيث عدد الفيديوهات المنشورة</div>
+
+  <div class="creators-body">
+    <!-- Chart -->
+    <div class="chart-container" style="flex:1">
+      <canvas id="creatorsChart" style="max-height:390px"></canvas>
+    </div>
+    <!-- Summary cards -->
+    <div class="creator-summary-col">
+      <div class="cs-card">
+        <div class="cs-card-eye">الأكثر نشاطًا</div>
+        <div class="cs-card-name">برنامج شبكات</div>
+        <div class="cs-card-sub">1,430 فيديو · 119M مشاهدة</div>
+        <div class="cs-card-sub">أعلى تفاعل: 200,562</div>
+        <span class="platform-tag pt-fb">فيسبوك</span>
+      </div>
+      <div class="cs-card">
+        <div class="cs-card-eye">الأعلى مشاهدةً</div>
+        <div class="cs-card-name">AlJazeera Arabic<br>قناة الجزيرة</div>
+        <div class="cs-card-sub">1,422 فيديو · 256M مشاهدة</div>
+        <div class="cs-card-sub">متوسط: 180K / فيديو</div>
+        <span class="platform-tag pt-yt">يوتيوب</span>
+      </div>
+      <div class="cs-card" style="background:#f9fafc">
+        <div class="cs-card-eye" style="color:var(--navy2)">إحصائية</div>
+        <div style="font-size:0.8rem;color:var(--navy);line-height:2">
+          <div>● حسابات فيسبوك: <strong>9</strong></div>
+          <div>● حسابات يوتيوب: <strong>1</strong></div>
+          <div>● حسابات إقليمية: <strong>7</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <span class="sf-brand">وحدة التحليل والبيانات · Al Jazeera</span>
+    <span>أداء المنشئين — عدد الفيديوهات والمشاهدات</span>
+    <span class="sf-page">5 / 6</span>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     SLIDE 6 — TOP CONTENT
+══════════════════════════════════════════════════════════════ -->
+<section class="slide slide-table" id="s6">
+  <div class="slide-dots">
+    <div class="slide-dot-item"></div>
+    <div class="slide-dot-item"></div>
+    <div class="slide-dot-item"></div>
+    <div class="slide-dot-item"></div>
+    <div class="slide-dot-item"></div>
+    <div class="slide-dot-item this"></div>
+  </div>
+
+  <div class="section-heading">أبرز الفيديوهات</div>
+  <div class="section-subheading">أعلى 10 فيديوهات من حيث عدد المشاهدات — 2025</div>
+
+  <div class="table-body">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width:42px">#</th>
+          <th style="width:120px">معاينة</th>
+          <th>عنوان الفيديو</th>
+          <th style="width:180px">المنشئ</th>
+          <th style="width:90px">المنصة</th>
+          <th style="width:110px">المشاهدات</th>
+          <th style="width:110px">التفاعلات</th>
+        </tr>
+      </thead>
+      <tbody id="topVideosTbody"></tbody>
+    </table>
+  </div>
+
+  <div class="slide-footer">
+    <span class="sf-brand">وحدة التحليل والبيانات · Al Jazeera</span>
+    <span>المصدر: Tubular Labs &nbsp;|&nbsp; تقرير أداء قناة الجزيرة 2025</span>
+    <span class="sf-page">6 / 6</span>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     SCRIPTS
+══════════════════════════════════════════════════════════════ -->
+<script>
+  /* ── Nav dots in top bar ─────────────────────────────────── */
+  const slides = ['s1','s2','s3','s4','s5','s6'];
+  const dotsEl = document.getElementById('navDots');
+  slides.forEach((id, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'nav-dot' + (i===0?' active':'');
+    btn.onclick = () => document.getElementById(id).scrollIntoView({behavior:'smooth'});
+    dotsEl.appendChild(btn);
+  });
+  // Update active dot on scroll
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if(e.isIntersecting) {
+        const idx = slides.indexOf(e.target.id);
+        document.querySelectorAll('.nav-dot').forEach((d,i) => {
+          d.classList.toggle('active', i===idx);
+        });
+      }
+    });
+  }, {threshold:0.5});
+  slides.forEach(id => observer.observe(document.getElementById(id)));
+
+  /* ── Chart.js Global Defaults ───────────────────────────── */
+  Chart.defaults.font.family = "'Tajawal', 'Segoe UI', sans-serif";
+  Chart.defaults.color = '#000542';
+  Chart.defaults.borderColor = 'rgba(0,5,66,0.08)';
+
+  const C = {
+    navy:    '#000542',
+    navy2:   '#00285d',
+    navy3:   '#12285a',
+    maroon:  '#681b34',
+    teal:    '#0097b2',
+    sky:     '#76c1f7',
+    red:     '#ff3131',
+    crimson: '#cb2327',
+    gold:    '#d4a10f'
+  };
+
+  /* ── Donut Chart ─────────────────────────────────────────── */
+  new Chart(document.getElementById('donutChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['فيسبوك','يوتيوب'],
+      datasets: [{
+        data: [4387, 1426],
+        backgroundColor: [C.navy2, C.crimson],
+        borderColor: '#fff',
+        borderWidth: 3,
+        hoverOffset: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      cutout: '65%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          rtl: true,
+          labels: { padding:14, font:{size:12,weight:'700'}, color:C.navy }
+        },
+        tooltip: {
+          callbacks: {
+            label: c => ` ${c.raw.toLocaleString('en-US')} فيديو (${((c.raw/5813)*100).toFixed(1)}%)`
+          }
+        }
+      }
+    }
+  });
+
+  /* ── Platform Bar Chart ─────────────────────────────────── */
+  new Chart(document.getElementById('platformBarChart'), {
+    type: 'bar',
+    data: {
+      labels: ['فيسبوك','يوتيوب'],
+      datasets: [
+        {
+          label: 'المشاهدات',
+          data: [298308416, 256224733],
+          backgroundColor: C.navy2,
+          borderRadius: 6
+        },
+        {
+          label: 'التفاعلات',
+          data: [11677971, 3974894],
+          backgroundColor: C.sky,
+          borderRadius: 6
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'top', rtl: true,
+          labels: { color: C.navy, font:{size:12,weight:'600'}, padding:14 }
+        },
+        tooltip: {
+          callbacks: { label: c => ` ${c.dataset.label}: ${c.raw.toLocaleString('en-US')}` }
+        }
+      },
+      scales: {
+        x: { grid:{color:'rgba(0,5,66,0.05)'}, ticks:{font:{size:13,weight:'700'},color:C.navy} },
+        y: {
+          grid:{color:'rgba(0,5,66,0.05)'},
+          ticks:{color:'#555', callback: v => v>=1e6?(v/1e6).toFixed(0)+'M':v.toLocaleString('en-US')}
+        }
+      }
+    }
+  });
+
+  /* ── Monthly Chart ──────────────────────────────────────── */
+  const MN = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  const MV = [34936683,21500523,29248824,36231963,47839546,45176613,26422437,24056994,38552391,31702206,18601528,31167036];
+  const MC = [326,308,336,410,362,444,335,284,297,289,241,294];
+  const maxMV = Math.max(...MV);
+
+  new Chart(document.getElementById('monthlyChart'), {
+    type: 'bar',
+    data: {
+      labels: MN,
+      datasets: [
+        {
+          type: 'bar',
+          label: 'المشاهدات',
+          data: MV,
+          backgroundColor: MV.map(v => v===maxMV ? C.gold : C.navy2),
+          borderRadius: 5,
+          yAxisID: 'y'
+        },
+        {
+          type: 'line',
+          label: 'عدد الفيديوهات',
+          data: MC,
+          borderColor: C.teal,
+          backgroundColor: 'rgba(0,151,178,0.06)',
+          borderWidth: 2.5,
+          pointBackgroundColor: C.teal,
+          pointBorderColor: '#fff',
+          pointRadius: 5,
+          tension: 0.4,
+          fill: true,
+          yAxisID: 'y2'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: {mode:'index', intersect:false},
+      plugins: {
+        legend: {
+          position:'top', rtl:true,
+          labels:{color:C.navy, font:{size:12,weight:'600'}, padding:14}
+        },
+        tooltip: {
+          callbacks: {
+            label: c => c.datasetIndex===0
+              ? ` المشاهدات: ${(c.raw/1e6).toFixed(2)}M`
+              : ` عدد الفيديوهات: ${c.raw}`
+          }
+        }
+      },
+      scales: {
+        x: { grid:{color:'rgba(0,5,66,0.04)'}, ticks:{color:C.navy,font:{size:11}} },
+        y: {
+          position:'left', grid:{color:'rgba(0,5,66,0.05)'},
+          ticks:{color:'#555', callback:v=>(v/1e6).toFixed(0)+'M'}
+        },
+        y2: {
+          position:'right', grid:{drawOnChartArea:false},
+          ticks:{color:C.teal, font:{size:11}}
+        }
+      }
+    }
+  });
+
+  /* Month mini heatmap ─────────────────────────────────────── */
+  const mmRow = document.getElementById('monthMiniRow');
+  MN.forEach((name,i) => {
+    const v = MV[i];
+    const pct = v/maxMV;
+    const bg  = `rgba(0,40,93,${0.06+pct*0.55})`;
+    const bdr = `rgba(0,40,93,${pct*0.3})`;
+    const txtC = pct>0.65 ? '#fff' : C.navy;
+    mmRow.innerHTML += `
+      <div class="month-mini" style="background:${bg};border:1px solid ${bdr}">
+        <div class="mm-name">${name}</div>
+        <div class="mm-val" style="color:${txtC}">${(v/1e6).toFixed(1)}M</div>
+      </div>`;
+  });
+
+  /* ── Creators Chart ──────────────────────────────────────── */
+  const CR = {
+    labels:    ['برنامج شبكات','AlJazeera Arabic','Al Jazeera Channel','الجزيرة - مصر','الجزيرة - الأردن','الجزيرة - فلسطين','الجزيرة - اليمن','SyriaNow','الجزيرة - العراق','الجزيرة - الصين'],
+    counts:    [1430,1422,1301,474,194,156,122,103,102,88],
+    platforms: ['fb','yt','fb','fb','fb','fb','fb','fb','fb','fb']
+  };
+
+  new Chart(document.getElementById('creatorsChart'), {
+    type: 'bar',
+    data: {
+      labels: [...CR.labels].reverse(),
+      datasets: [{
+        label: 'عدد الفيديوهات',
+        data: [...CR.counts].reverse(),
+        backgroundColor: [...CR.platforms].reverse().map(p => p==='yt' ? C.crimson : C.navy2),
+        borderRadius: 4
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: {
+        legend:{display:false},
+        tooltip:{callbacks:{label:c=>` فيديوهات: ${c.raw.toLocaleString('en-US')}`}}
+      },
+      scales: {
+        x: { grid:{color:'rgba(0,5,66,0.05)'}, ticks:{color:'#555'} },
+        y: { grid:{display:false}, ticks:{color:C.navy, font:{size:11.5,family:"'Tajawal',sans-serif"}} }
+      }
+    }
+  });
+
+  /* ── Top Videos Table ────────────────────────────────────── */
+  const VIDEOS = [
+    {title:'أغرب جنازة في مصر.. خلايا نحل داخل مقبرة مغلقة منذ 5 سنوات',      creator:'الجزيرة - مصر',              p:'fb', ytId:null,            fbId:'1252304326947586', v:7125179, e:183179},
+    {title:'فيديوهات مرعبة لأقوى وأعنف ضربة إيرانية على إسرائيل',              creator:'AlJazeera Arabic قناة الجزيرة', p:'yt', ytId:'UbGaYgd3FSw',   fbId:null,               v:6179622, e:74960},
+    {title:'حاج ليبي يعطل الطائرة مرتين!',                                      creator:'برنامج شبكات',               p:'fb', ytId:null,            fbId:'4121387628121918', v:4277348, e:200562},
+    {title:'ترمب يهدد أفغانستان: أمور سيئة ستحدث إذا لم تعيدوا قاعدة باغرام', creator:'الجزيرة - الصين',            p:'fb', ytId:null,            fbId:'1176709307617821', v:4226508, e:147979},
+    {title:'أسئلة تحرج "تشات جي بي تي" ويرفض الإجابة عليها',                   creator:'AlJazeera Arabic قناة الجزيرة', p:'yt', ytId:'SX3joZd4Ldo',   fbId:null,               v:4001996, e:74960},
+    {title:'استخراج 30 حصوة من كلية مريض بسبب المشروبات الغازية',               creator:'الجزيرة - الصين',            p:'fb', ytId:null,            fbId:'917407807135752',  v:3948048, e:113947},
+    {title:'الصين تبتكر ذهبا جديدا سيشعل السوق العالمي',                        creator:'AlJazeera Arabic قناة الجزيرة', p:'yt', ytId:'-lT4sgJke10',   fbId:null,               v:3031441, e:42000},
+    {title:'"صياد 3-G".. صاروخ دفاع جوي بحري إيراني جديد',                     creator:'برنامج شبكات',               p:'fb', ytId:null,            fbId:'2923553021189327', v:2761637, e:140284},
+    {title:'الجزيرة 2.. نافذة تعود عبرها برامج اشتقنا لها',                     creator:'Al Jazeera Channel',         p:'fb', ytId:null,            fbId:'4250134885237322', v:2530425, e:22000},
+    {title:'كتائب القسام تُدخل تكتيكات جديدة ضد جيش الاحتلال',                 creator:'الجزيرة - فلسطين',           p:'fb', ytId:null,            fbId:'1143986220918913', v:2491641, e:38000}
+  ];
+
+  const rankClass = ['g1','g1','g2','g2','g3','g3','','','',''];
+
+  function buildThumb(video) {
+    if (video.ytId) {
+      // Real YouTube thumbnail — two quality levels with fallback
+      const hq  = `https://img.youtube.com/vi/${video.ytId}/mqdefault.jpg`;
+      const url = `https://www.youtube.com/watch?v=${video.ytId}`;
+      return `
+        <a href="${url}" target="_blank" rel="noopener" style="display:block;text-decoration:none">
+          <div class="thumb-wrap">
+            <img src="${hq}" alt="thumbnail" loading="lazy"
+                 onerror="this.src='https://img.youtube.com/vi/${video.ytId}/default.jpg'">
+            <div class="thumb-play">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                <circle cx="14" cy="14" r="14" fill="rgba(255,0,0,0.85)"/>
+                <polygon points="11,9 22,14 11,19" fill="white"/>
+              </svg>
+            </div>
+          </div>
+        </a>`;
+    } else {
+      // Facebook video — styled placeholder linking to the video
+      const url = `https://www.facebook.com/video.php?v=${video.fbId}`;
+      return `
+        <a href="${url}" target="_blank" rel="noopener" style="display:block;text-decoration:none">
+          <div class="thumb-wrap">
+            <div class="thumb-fb-placeholder">
+              <div class="thumb-fb-icon">f</div>
+              <div class="thumb-fb-label">Facebook Video</div>
+            </div>
+            <div class="thumb-play">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                <circle cx="14" cy="14" r="14" fill="rgba(0,40,93,0.85)"/>
+                <polygon points="11,9 22,14 11,19" fill="white"/>
+              </svg>
+            </div>
+          </div>
+        </a>`;
+    }
+  }
+
+  const tbody = document.getElementById('topVideosTbody');
+  VIDEOS.forEach((v, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="rank-badge ${rankClass[i]}">${i+1}</span></td>
+      <td style="padding:0.5rem 1rem">${buildThumb(v)}</td>
+      <td class="td-title" title="${v.title}">${v.title}</td>
+      <td style="font-size:0.73rem;color:#777;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v.creator}</td>
+      <td><span class="ptag ${v.p}">${v.p==='fb'?'فيسبوك':'يوتيوب'}</span></td>
+      <td class="td-views">${v.v.toLocaleString('en-US')}</td>
+      <td class="td-eng">${v.e.toLocaleString('en-US')}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  /* ── Real PDF Download — one slide per page ─────────────── */
+  document.getElementById('btnDownloadPdf').addEventListener('click', async function () {
+    const btn = this;
+    btn.textContent = '⏳ جارٍ التحميل...';
+    btn.disabled = true;
+    document.body.classList.add('pdf-generating');
+
+    try {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
+      const PDF_W = 297;   // A4 landscape mm
+      const PDF_H = 210;
+
+      const slides = Array.from(document.querySelectorAll('.slide'));
+
+      for (let i = 0; i < slides.length; i++) {
+        const slide = slides[i];
+
+        // Update button progress
+        btn.textContent = `⏳ ${i + 1} / ${slides.length}`;
+
+        // Scroll slide into view so html2canvas sees it fully rendered
+        slide.scrollIntoView({ behavior: 'instant', block: 'start' });
+        await new Promise(r => setTimeout(r, 120));
+
+        const canvas = await html2canvas(slide, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          logging: false,
+          scrollX: 0,
+          scrollY: 0,
+          width:  slide.offsetWidth,
+          height: slide.offsetHeight,
+          windowWidth:  slide.offsetWidth,
+          windowHeight: slide.offsetHeight
+        });
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        if (i > 0) pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, 0, PDF_W, PDF_H, '', 'FAST');
+      }
+
+      // Scroll back to top
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      pdf.save('تقرير-أداء-الجزيرة-2025.pdf');
+
+    } catch (err) {
+      console.error('PDF error:', err);
+      alert('حدث خطأ أثناء إنشاء الملف. حاول مرة أخرى.');
+    } finally {
+      document.body.classList.remove('pdf-generating');
+      btn.textContent = '⬇ تحميل PDF';
+      btn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
